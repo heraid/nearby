@@ -1,0 +1,30 @@
+create table marketing_list_brown_402 as (
+with macro_select as (
+SELECT pot.prop_yr_owner_id AS potential_customer
+     , rank() OVER (ORDER BY pur.nearby_customers DESC
+                           , pot.prop_yr_owner_id) AS rnk
+     , pur.nearby_customers
+     , pot.market_val AS market_val
+     , pot.latitude
+     , pot.longitude
+     , pot.geom AS geom
+     , pot.prop_year_addr_line1 AS address1
+     , pot.prop_year_addr_line2 AS address2
+     , pot.prop_year_line3 AS address3
+     , pot.prop_addr_city AS city
+     , pot.prop_addr_state AS state
+     , pot.prop_addr_zip AS zipcode
+     , pot.prop_yr_owner_name AS name
+FROM   brown_2018_geocoded pot
+LEFT   JOIN LATERAL (
+   SELECT count(*) AS nearby_customers
+   FROM   purchasers_geocoded pur
+   WHERE ST_DWithin(pur.geom, pot.geom, 402) 
+   ) pur ON true
+ORDER BY 2 asc
+)
+select * from macro_select); 
+
+I have tried changing this line 
+   WHERE NOT ST_DWithin(pur.geom, pot.geom, 804) AND ST_DWithin (pur.geom, pot.geom, 1206)
+with different values but I always get the same result. 
